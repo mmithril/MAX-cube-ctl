@@ -39,8 +39,7 @@
 #ifndef MAXMSG_H
 #define MAXMSG_H
 
-enum MaxDeviceType
-{
+enum MaxDeviceType {
     Cube = 0,
     RadiatorThermostat = 1,
     RadiatorThermostatPlus = 2,
@@ -49,8 +48,7 @@ enum MaxDeviceType
     EcoButton = 5
 };
 
-enum MaxConfigParam
-{
+enum MaxConfigParam {
     EcoConfigParam = 0,
     ComfortConfigParam = 1
 };
@@ -58,28 +56,26 @@ enum MaxConfigParam
 /* Size of the code in chars */
 #define BS_CODE_SZ  6
 
-enum BSIndex
-{
+enum BSIndex {
     TemperatureAndMode = 0,
     ProgramData = 1,
     EcoModeTemperature = 2,
     ConfigValveFunctions = 3,
     AddLinkPartner = 4,
     RemoveLinkPartner = 5,
-    SetGroupAddress =6
+    SetGroupAddress = 6
 };
 
 /* struct MAX_message is a generic structure to be used for all messages. */
 struct MAX_message {
-    char type;    /* message name */
-    char colon;   /* reserved for ':' */
+    char type; /* message name */
+    char colon; /* reserved for ':' */
     char data[1]; /* data points to beginning of message payload */
 };
 
 /* MAX_msg_list is structure used to implement a list of messages that are
  * part of a packet */
-typedef struct MME
-{
+typedef struct MME {
     struct MME *prev;
     struct MME *next;
     size_t MAX_msg_len;
@@ -149,6 +145,7 @@ struct C_Data {
 
 /* union C_Data_Device - decoded from Base64 payload in C message */
 union C_Data_Device {
+
     struct cube {
         unsigned char Data_Length[1];
         unsigned char Address_of_device[3];
@@ -158,6 +155,7 @@ union C_Data_Device {
         unsigned char unknown2[1];
         char Serial_Number[10];
     } cube;
+
     struct device {
         unsigned char Data_Length[1];
         unsigned char Address_of_device[3];
@@ -171,12 +169,14 @@ union C_Data_Device {
 
 /* union C_Data_Config - decoded from Base64 payload in C message */
 union C_Data_Config {
+
     struct cubec {
         unsigned char Is_Portal_Enabled[1];
         char Unknown[66];
         char Portal_URL[1];
         /* Unknown */
     } cubec;
+
     struct rtc {
         unsigned char Comfort_Temperature[1];
         unsigned char Eco_Temperature[1];
@@ -257,7 +257,7 @@ struct Discover_Data {
  * OUTGOING TIME CONFIG:                 "v:"
  * OUTGOING NTP SERVER:                  "f:"
  * OUTGOING SEND WAKEUP:                 "z:"
-*/
+ */
 
 /* Maximum number of set points per s command */
 #define MAX_CMD_SETPOINTS 7
@@ -296,8 +296,7 @@ struct s_Program_Data {
     unsigned char Temp_and_Time7[2];
 };
 
-enum TempMode
-{
+enum TempMode {
     AutoTempMode = 0,
     ManualTempMode = 1,
     VacationTempMode = 2,
@@ -360,12 +359,12 @@ int cmpMAXConfigParam(MAX_msg_list *msg_list, int param, void *value);
  * points to the first element in the list. msg_list can be NULL, in that case
  * there will be one element in the list after calling this function */
 MAX_msg_list* appendMAXmsg(MAX_msg_list* msg_list, struct MAX_message *msg,
-    size_t msg_len);
+        size_t msg_len);
 
 /* Returns the index of the given base string */
 int base_string_index(const char *base_string);
 /* Returns a string representing the base string situated at 'index' position in
  * the base string array */
-const char*  base_string_code(int index);
+const char* base_string_code(int index);
 
 #endif /* MAXMSG_H */

@@ -27,39 +27,31 @@
 #include "max.h"
 #include "base64.h"
 
-int parseMAXData(char *MAXData, int size, MAX_msg_list** msg_list)
-{
+int parseMAXData(char *MAXData, int size, MAX_msg_list** msg_list) {
     char *pos = MAXData, *tmp;
     char *end = MAXData + size - 1;
     MAX_msg_list *new = NULL, *iter;
     int len;
     size_t outlen, off;
 
-    if (MAXData == NULL)
-    {
+    if (MAXData == NULL) {
         return -1;
     }
-    while (pos != NULL && pos < end)
-    {
-        if (*(pos + 1) != ':')
-        {
+    while (pos != NULL && pos < end) {
+        if (*(pos + 1) != ':') {
             return -1;
         }
         tmp = strstr(pos, MSG_END);
-        if (tmp == NULL)
-        {
+        if (tmp == NULL) {
             return -1;
         }
         tmp += MSG_END_LEN;
-        new = (MAX_msg_list*)malloc(sizeof(MAX_msg_list));
-        if (*msg_list == NULL)
-        {
+        new = (MAX_msg_list*) malloc(sizeof (MAX_msg_list));
+        if (*msg_list == NULL) {
             *msg_list = new;
             new->prev = NULL;
             new->next = NULL;
-        }
-        else
-        {
+        } else {
             iter = *msg_list;
             while (iter->next != NULL) {
                 iter = iter->next;
@@ -68,27 +60,25 @@ int parseMAXData(char *MAXData, int size, MAX_msg_list** msg_list)
             new->prev = iter;
             new->next = NULL;
         }
-        switch (*pos)
-        {
+        switch (*pos) {
             case 'H':
-                {
-                    int H_len = sizeof(struct MAX_message) - 1 +
-                                            sizeof(struct H_Data);
-                    new->MAX_msg = malloc(H_len);
-                    memcpy(new->MAX_msg, pos, H_len);
-                    new->MAX_msg_len = H_len;
-                    break;
-                }
+            {
+                int H_len = sizeof (struct MAX_message) - 1 +
+                        sizeof (struct H_Data);
+                new->MAX_msg = malloc(H_len);
+                memcpy(new->MAX_msg, pos, H_len);
+                new->MAX_msg_len = H_len;
+                break;
+            }
             case 'C':
                 /* Calculate offset of second field (C_Data_Device) */
-                off = sizeof(struct MAX_message) - 1 + sizeof(struct C_Data);
+                off = sizeof (struct MAX_message) - 1 + sizeof (struct C_Data);
                 /* Move to second field */
                 /* Calculate length of second field */
                 len = tmp - MSG_END_LEN - pos - off;
-                new->MAX_msg = (struct MAX_message*)base64_to_hex(pos + off,
-                                             len, off, 0, &outlen);
-                if (new->MAX_msg == NULL)
-                {
+                new->MAX_msg = (struct MAX_message*) base64_to_hex(pos + off,
+                        len, off, 0, &outlen);
+                if (new->MAX_msg == NULL) {
                     return -1;
                 }
                 memcpy(new->MAX_msg, pos, off);
@@ -96,13 +86,12 @@ int parseMAXData(char *MAXData, int size, MAX_msg_list** msg_list)
                 break;
             case 'L':
                 /* Calculate offset of payload */
-                off = sizeof(struct MAX_message) - 1;
+                off = sizeof (struct MAX_message) - 1;
                 /* Calculate length of data */
                 len = tmp - MSG_END_LEN - pos - off;
-                new->MAX_msg = (struct MAX_message*)base64_to_hex(pos + off,
-                                             len, off, 0, &outlen);
-                if (new->MAX_msg == NULL)
-                {
+                new->MAX_msg = (struct MAX_message*) base64_to_hex(pos + off,
+                        len, off, 0, &outlen);
+                if (new->MAX_msg == NULL) {
                     return -1;
                 }
                 memcpy(new->MAX_msg, pos, off);
@@ -115,23 +104,22 @@ int parseMAXData(char *MAXData, int size, MAX_msg_list** msg_list)
                 new->MAX_msg_len = tmp - pos;
                 break;
             case 'S':
-                {
-                    int S_len = sizeof(struct MAX_message) - 1 +
-                                            sizeof(struct S_Data);
-                    new->MAX_msg = malloc(S_len);
-                    memcpy(new->MAX_msg, pos, S_len);
-                    new->MAX_msg_len = S_len;
-                    break;
-                }
+            {
+                int S_len = sizeof (struct MAX_message) - 1 +
+                        sizeof (struct S_Data);
+                new->MAX_msg = malloc(S_len);
+                memcpy(new->MAX_msg, pos, S_len);
+                new->MAX_msg_len = S_len;
+                break;
+            }
             case 's':
                 /* Calculate offset of payload */
-                off = sizeof(struct MAX_message) - 1;
+                off = sizeof (struct MAX_message) - 1;
                 /* Calculate length of data */
                 len = tmp - MSG_END_LEN - pos - off;
-                new->MAX_msg = (struct MAX_message*)base64_to_hex(pos + off,
-                                             len, off, 0, &outlen);
-                if (new->MAX_msg == NULL)
-                {
+                new->MAX_msg = (struct MAX_message*) base64_to_hex(pos + off,
+                        len, off, 0, &outlen);
+                if (new->MAX_msg == NULL) {
                     return -1;
                 }
                 memcpy(new->MAX_msg, pos, off);
