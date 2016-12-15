@@ -33,6 +33,6 @@
 #define MAX_MCAST_ADDR "224.0.0.1"
 #define MAX_BCAST_ADDR "255.255.255.255"
 
-int MaxMsgRecvTmo(int connectionId, MAX_msg_list **input_msg_list, int tmo);
+int parseMAXData(char *MAXData, int size, MAX_msg_list** msg_list);
 
 #endif /* MAX_H */

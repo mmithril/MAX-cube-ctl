@@ -460,9 +460,8 @@ void dumpMAXHostpkt(MAX_msg_list* msg_list)
     }
 }
 
-/* Log device list info */
-void logMAXHostDeviceList(FILE *fp, MAX_msg_list* msg_list)
-{
+int extractValvePositions(MAX_msg_list* msg_list, int* valvePositions) {
+    int position = 0;
     while (msg_list != NULL) {
         char* md = msg_list->MAX_msg->data;
         switch (msg_list->MAX_msg->type)
@@ -492,8 +491,8 @@ void logMAXHostDeviceList(FILE *fp, MAX_msg_list* msg_list)
                         len = val;
                         tmp = L_D->RF_Address;
                         /* RF Address */
-                        fprintf(fp, "%x%x%x  ",
-                               tmp[0], tmp[1], tmp[2]);
+//                        fprintf(fp, "%x%x%x  ",
+//                               tmp[0], tmp[1], tmp[2]);
                         val = L_D->Flags[0];
                         val = (val << 8) + L_D->Flags[1];
                         mode = val & 0b00000011;
@@ -502,29 +501,30 @@ void logMAXHostDeviceList(FILE *fp, MAX_msg_list* msg_list)
                             /* More info available */
                             val = L_D->Valve_Position[0];
                             /* Valve position */
-                            fprintf(fp, "%d  ", val);
+//                            fprintf(fp, "%d  ", val);
+                            valvePositions[position++] = val;
                             fval = L_D->Temperature[0] / 2.;
                             /* Temperature set */
-                            fprintf(fp, "%.1f  ", fval);
+//                            fprintf(fp, "%.1f  ", fval); 
                             if (mode == AutoTempMode)
                             {
                                 val = L_D->next_data[0] & 0b00000001;
                                 val = (val << 8) + L_D->next_data[1];
                                 fval = val / 10.;
                                 /* Actual temperature */
-                                fprintf(fp, "%.1f", fval);
+//                                fprintf(fp, "%.1f", fval);
                             }
                             else
                             {
-                                fprintf(fp, "NA");
+                                /*fprintf(fp, "NA");*/
                             }    
                         }
                         else
                         {
-                            fprintf(fp, "NA  NA");
+//                            fprintf(fp, "NA  NA");
                         }    
                         pos += len + 1;
-                        fprintf(fp, "\n");
+//                        fprintf(fp, "\n");
                         if (pos >= tlen)
                         {
                             break;
@@ -537,6 +537,7 @@ void logMAXHostDeviceList(FILE *fp, MAX_msg_list* msg_list)
         }
         msg_list = msg_list->next;
     }
+    return position;
 }
 
 unsigned char* findMAXDaySchedule(uint16_t day, MAX_msg_list *msg_list)

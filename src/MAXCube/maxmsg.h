@@ -339,6 +339,8 @@ struct l_Data {
     char CRLF[2]; /* reserved for '\n\r' */
 };
 
+/* Extract positions of valves */
+int extractValvePositions(MAX_msg_list* msg_list, int* valvePositions);
 /* Dump packet in host format */
 void dumpMAXHostpkt(MAX_msg_list* msg_list);
 /* Dump packet in network format */
