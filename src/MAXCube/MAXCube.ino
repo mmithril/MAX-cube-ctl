@@ -9,27 +9,26 @@ byte mac[] = {
     0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
 };
 
-
+#define LOG(l, v) Serial.print(l);Serial.print(": ");Serial.println(v);
 
 IPAddress server(10, 0, 0, 3);
+IPAddress me(10, 0, 0, 4);
 EthernetClient client;
 long lastData = 0;
 int n = 0;
-char recvBuff[4000];
 
 boolean fullData = false;
 
 void setup() {
     Serial.begin(115200);
-    delay(2000);
     Serial.print("Connecting to ethernet...");
     int dhcp = Ethernet.begin(mac);
     if (dhcp == 1) {
-        Serial.println("DONE");
+    Serial.println("DONE");
     } else {
         Serial.println("FAILED");
     }
-
+    
     Serial.println(Ethernet.localIP());
 
     Serial.print("Connecting to server...");
@@ -50,7 +49,7 @@ void loop() {
     // from the server, read them and print them:
     while (client.available()) {
         char c = client.read();
-        recvBuff[n++] = c;
+        addChar(c);
         Serial.print(c);
         lastData = millis();
     }
@@ -77,35 +76,40 @@ void loop() {
         Serial.print("Response length: ");
         Serial.println(n);
         client.stop();
-        MAX_msg_list* msg_list = NULL;
-        Serial.print("Parsing...");
-        Serial.print(recvBuff[0]);
-        parseMAXData(recvBuff, n, &msg_list);
-        Serial.println("DONE");
-        if (msg_list == NULL) {
-            Serial.println("Nothing parsed");
+        finalizeParsing();
+        char* lMessage = getOriginalLMessage();
+        int len = getOriginalLMessageLength();
+        for (int i = 0; i < len; i++) {
+            Serial.print(lMessage[i]);
         }
-        int valvePositions[20];
+        Serial.println();
+        MAX_message maxLMessage = getLMessage();
+        LOG("Type", maxLMessage.type);
+        LOG("Length", maxLMessage.dataLength);
+        for (int i = 0; i < maxLMessage.dataLength;i++) {
+            Serial.print((byte) (maxLMessage.data[i]), DEC);
+            Serial.print(' ');
+        }
+        Serial.println();
+        for (int i = 0; i < maxLMessage.dataLength;) {
+            byte submsgLength = (byte)(maxLMessage.data[i]);
+            Serial.print(submsgLength, DEC);
+            char address[10];
+            sprintf(address, "%.2X %.2X %.2X ", maxLMessage.data[i + 1], maxLMessage.data[i + 2], maxLMessage.data[i + 3]);
+            Serial.print(address);
+            
+            if (submsgLength == 11) {
+                Serial.print(' ');
+                Serial.print((byte)maxLMessage.data[i + 7], DEC);
+                Serial.print(' ');
+                byte setpointBinary = (byte) maxLMessage.data[i + 8];
+                float setpoint = (setpointBinary & 0b01111111) / 2;
+                Serial.print(setpoint, DEC);
 
-        MAX_msg_list* msg_list_i = msg_list;
-        while (msg_list_i != NULL) {
-            char* md = msg_list_i->MAX_msg->data;
-            Serial.print("Message type:");
-            Serial.println(msg_list_i->MAX_msg->type);
-            msg_list_i = msg_list_i->next;
-        }
-        int valvesCount = extractValvePositions(msg_list, valvePositions);
-        Serial.print("Devices: ");
-        Serial.println(valvesCount);
-        for (int i = 0; i < valvesCount; i++) {
-            Serial.print(valvePositions[i]);
+            }
             Serial.println();
+            i += submsgLength + 1;
 
-        }
-        msg_list_i = msg_list;
-        while (msg_list_i != NULL) {
-            msg_list_i = msg_list_i->next;
-            free(msg_list_i->MAX_msg);
         }
         while (true) {
             ;

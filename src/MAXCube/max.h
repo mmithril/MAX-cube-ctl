@@ -33,6 +33,10 @@
 #define MAX_MCAST_ADDR "224.0.0.1"
 #define MAX_BCAST_ADDR "255.255.255.255"
 
-int parseMAXData(char *MAXData, int size, MAX_msg_list** msg_list);
+void addChar(char ch);
+void finalizeParsing();
+char* getOriginalLMessage();
+int getOriginalLMessageLength();
+struct MAX_message getLMessage();
 
 #endif /* MAX_H */

@@ -27,110 +27,62 @@
 #include "max.h"
 #include "base64.h"
 
-int parseMAXData(char *MAXData, int size, MAX_msg_list** msg_list) {
-    char *pos = MAXData, *tmp;
-    char *end = MAXData + size - 1;
-    MAX_msg_list *new = NULL, *iter;
-    int len;
-    size_t outlen, off;
 
-    if (MAXData == NULL) {
-        return -1;
+/*
+ * 0 - other messages
+ * 1 - /r/n parsed
+ * 2 - L: parsed
+ */
+int state = 0;
+char previousChar = 0;
+char lMessageBuffer[200];
+int lPosition = 0;
+struct MAX_message parsedMessage;
+struct L_Data parsedLData[10];
+int thermostatCount=0;
+
+void addChar(char ch) {
+    switch (state) {
+        case 0:
+            if (previousChar == '\r' && ch == '\n') {
+                state = 1;
+            }
+            break;
+        case 1:
+            if (ch == ':') {
+                if (previousChar == 'L') {
+                    state = 2;
+                    lPosition = 0;
+                } else {
+                    state = 0;
+                }
+            }
+            break;
+        case 2:
+            if (previousChar == '\r' && ch == '\n') {
+                state = 1;
+            }
+            lMessageBuffer[lPosition++] = ch;
     }
-    while (pos != NULL && pos < end) {
-        if (*(pos + 1) != ':') {
-            return -1;
-        }
-        tmp = strstr(pos, MSG_END);
-        if (tmp == NULL) {
-            return -1;
-        }
-        tmp += MSG_END_LEN;
-        new = (MAX_msg_list*) malloc(sizeof (MAX_msg_list));
-        if (*msg_list == NULL) {
-            *msg_list = new;
-            new->prev = NULL;
-            new->next = NULL;
-        } else {
-            iter = *msg_list;
-            while (iter->next != NULL) {
-                iter = iter->next;
-            }
-            iter->next = new;
-            new->prev = iter;
-            new->next = NULL;
-        }
-        switch (*pos) {
-            case 'H':
-            {
-                int H_len = sizeof (struct MAX_message) - 1 +
-                        sizeof (struct H_Data);
-                new->MAX_msg = malloc(H_len);
-                memcpy(new->MAX_msg, pos, H_len);
-                new->MAX_msg_len = H_len;
-                break;
-            }
-            case 'C':
-                /* Calculate offset of second field (C_Data_Device) */
-                off = sizeof (struct MAX_message) - 1 + sizeof (struct C_Data);
-                /* Move to second field */
-                /* Calculate length of second field */
-                len = tmp - MSG_END_LEN - pos - off;
-                new->MAX_msg = (struct MAX_message*) base64_to_hex(pos + off,
-                        len, off, 0, &outlen);
-                if (new->MAX_msg == NULL) {
-                    return -1;
-                }
-                memcpy(new->MAX_msg, pos, off);
-                new->MAX_msg_len = off + outlen;
-                break;
-            case 'L':
-                /* Calculate offset of payload */
-                off = sizeof (struct MAX_message) - 1;
-                /* Calculate length of data */
-                len = tmp - MSG_END_LEN - pos - off;
-                new->MAX_msg = (struct MAX_message*) base64_to_hex(pos + off,
-                        len, off, 0, &outlen);
-                if (new->MAX_msg == NULL) {
-                    return -1;
-                }
-                memcpy(new->MAX_msg, pos, off);
-                new->MAX_msg_len = off + outlen;
-                break;
-            case 'M':
-            case 'Q':
-                new->MAX_msg = malloc(tmp - pos);
-                memcpy(new->MAX_msg, pos, tmp - pos);
-                new->MAX_msg_len = tmp - pos;
-                break;
-            case 'S':
-            {
-                int S_len = sizeof (struct MAX_message) - 1 +
-                        sizeof (struct S_Data);
-                new->MAX_msg = malloc(S_len);
-                memcpy(new->MAX_msg, pos, S_len);
-                new->MAX_msg_len = S_len;
-                break;
-            }
-            case 's':
-                /* Calculate offset of payload */
-                off = sizeof (struct MAX_message) - 1;
-                /* Calculate length of data */
-                len = tmp - MSG_END_LEN - pos - off;
-                new->MAX_msg = (struct MAX_message*) base64_to_hex(pos + off,
-                        len, off, 0, &outlen);
-                if (new->MAX_msg == NULL) {
-                    return -1;
-                }
-                memcpy(new->MAX_msg, pos, off);
-                new->MAX_msg_len = off + outlen;
-                break;
-            default:
-                new->MAX_msg = malloc(tmp - pos);
-                memcpy(new->MAX_msg, pos, tmp - pos);
-                break;
-        }
-        pos = tmp;
-    }
-    return 0;
+    previousChar = ch;
+}
+
+void finalizeParsing() {
+    parsedMessage.type = 'L';
+    size_t dataLength;
+    parsedMessage.data = base64_to_hex(lMessageBuffer, lPosition - MSG_END_LEN, 0, 0, &dataLength);
+    parsedMessage.dataLength = dataLength;
+    
+}
+
+char* getOriginalLMessage() {
+    return lMessageBuffer;
+}
+
+int getOriginalLMessageLength(){
+    return lPosition;
+}
+ 
+struct MAX_message getLMessage() {
+    return parsedMessage;
 }
