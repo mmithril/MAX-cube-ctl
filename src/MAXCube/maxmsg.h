@@ -216,6 +216,13 @@ struct L_Data {
     unsigned char next_data[1];
 };
 
+/* struct L_Data - decoded from Base64 payload in L message */
+struct ThermostatData {
+    unsigned char RFAddress[3];
+    unsigned char valvePosition;
+    float setpoint;
+};
+
 /* struct Discover_Data - HEX payload in Discover reply */
 struct Discover_Data {
     char Name[8];

@@ -38,5 +38,6 @@ void finalizeParsing();
 char* getOriginalLMessage();
 int getOriginalLMessageLength();
 struct MAX_message getLMessage();
-
+int getThermostatCount();
+struct ThermostatData* getThermostatData();
 #endif /* MAX_H */

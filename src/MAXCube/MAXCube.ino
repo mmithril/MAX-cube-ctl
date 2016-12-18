@@ -24,11 +24,11 @@ void setup() {
     Serial.print("Connecting to ethernet...");
     int dhcp = Ethernet.begin(mac);
     if (dhcp == 1) {
-    Serial.println("DONE");
+        Serial.println("DONE");
     } else {
         Serial.println("FAILED");
     }
-    
+
     Serial.println(Ethernet.localIP());
 
     Serial.print("Connecting to server...");
@@ -86,30 +86,21 @@ void loop() {
         MAX_message maxLMessage = getLMessage();
         LOG("Type", maxLMessage.type);
         LOG("Length", maxLMessage.dataLength);
-        for (int i = 0; i < maxLMessage.dataLength;i++) {
+        for (int i = 0; i < maxLMessage.dataLength; i++) {
             Serial.print((byte) (maxLMessage.data[i]), DEC);
             Serial.print(' ');
         }
         Serial.println();
-        for (int i = 0; i < maxLMessage.dataLength;) {
-            byte submsgLength = (byte)(maxLMessage.data[i]);
-            Serial.print(submsgLength, DEC);
+        struct ThermostatData *thermostatData = getThermostatData();
+        for (int i = 0; i < getThermostatCount(); i++) {
+            struct ThermostatData thermostat = thermostatData[i];
             char address[10];
-            sprintf(address, "%.2X %.2X %.2X ", maxLMessage.data[i + 1], maxLMessage.data[i + 2], maxLMessage.data[i + 3]);
+            sprintf(address, "%.2X %.2X %.2X ", thermostat.RFAddress[0], thermostat.RFAddress[1], thermostat.RFAddress[2]);
             Serial.print(address);
-            
-            if (submsgLength == 11) {
-                Serial.print(' ');
-                Serial.print((byte)maxLMessage.data[i + 7], DEC);
-                Serial.print(' ');
-                byte setpointBinary = (byte) maxLMessage.data[i + 8];
-                float setpoint = (setpointBinary & 0b01111111) / 2;
-                Serial.print(setpoint, DEC);
-
-            }
+            Serial.print(thermostat.valvePosition);
+            Serial.print(' ');
+            Serial.print(thermostat.setpoint, DEC);
             Serial.println();
-            i += submsgLength + 1;
-
         }
         while (true) {
             ;

@@ -38,8 +38,8 @@ char previousChar = 0;
 char lMessageBuffer[200];
 int lPosition = 0;
 struct MAX_message parsedMessage;
-struct L_Data parsedLData[10];
-int thermostatCount=0;
+struct ThermostatData thermostatData[10];
+int thermostatCount = 0;
 
 void addChar(char ch) {
     switch (state) {
@@ -70,19 +70,42 @@ void addChar(char ch) {
 void finalizeParsing() {
     parsedMessage.type = 'L';
     size_t dataLength;
+    free(parsedMessage.data);
     parsedMessage.data = base64_to_hex(lMessageBuffer, lPosition - MSG_END_LEN, 0, 0, &dataLength);
     parsedMessage.dataLength = dataLength;
-    
+
+    for (int i = 0; i < parsedMessage.dataLength;) {
+        unsigned char submsgLength = (unsigned char) (parsedMessage.data[i]);
+
+        if (submsgLength == 11 && thermostatCount < 10) {
+            thermostatData[thermostatCount].RFAddress[0] = parsedMessage.data[i + 1];
+            thermostatData[thermostatCount].RFAddress[1] = parsedMessage.data[i + 2];
+            thermostatData[thermostatCount].RFAddress[2] = parsedMessage.data[i + 3];
+            thermostatData[thermostatCount].valvePosition = parsedMessage.data[i + 7];
+            thermostatData[thermostatCount].setpoint = (parsedMessage.data[i + 8] & 0b01111111) / 2;
+            thermostatCount++;
+        }
+
+        i += submsgLength + 1;
+    }
 }
 
 char* getOriginalLMessage() {
     return lMessageBuffer;
 }
 
-int getOriginalLMessageLength(){
+int getOriginalLMessageLength() {
     return lPosition;
 }
- 
+
 struct MAX_message getLMessage() {
     return parsedMessage;
 }
+
+int getThermostatCount() {
+    return thermostatCount;
+}
+
+struct ThermostatData* getThermostatData() {
+    return thermostatData;
+} 
