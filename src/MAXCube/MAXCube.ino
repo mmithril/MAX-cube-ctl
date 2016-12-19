@@ -34,7 +34,7 @@ void setup() {
     Serial.print("Connecting to server...");
 
     // if you get a connection, report back via serial:
-    if (client.connect(server, 62910)) {
+    if (client.connect(server, MAX_TCP_PORT)) {
         Serial.println("DONE");
     } else {
         // if you didn't get a connection to the server:
@@ -54,17 +54,6 @@ void loop() {
         lastData = millis();
     }
 
-    /*
-      // as long as there are bytes in the serial queue,
-      // read them and send them out the socket if it's open:
-      while (Serial.available() > 0) {
-        char inChar = Serial.read();
-        if (client.connected()) {
-          client.print(inChar);
-        }
-      }
-     */
-
     if (lastData + 100 < millis()) {
         client.println("g:");
     }
@@ -77,20 +66,12 @@ void loop() {
         Serial.println(n);
         client.stop();
         finalizeParsing();
-        char* lMessage = getOriginalLMessage();
-        int len = getOriginalLMessageLength();
+        char* lMessage = getRawLMessage();
+        int len = getRawLMessageLength();
         for (int i = 0; i < len; i++) {
             Serial.print(lMessage[i]);
         }
-        Serial.println();
-        MAX_message maxLMessage = getLMessage();
-        LOG("Type", maxLMessage.type);
-        LOG("Length", maxLMessage.dataLength);
-        for (int i = 0; i < maxLMessage.dataLength; i++) {
-            Serial.print((byte) (maxLMessage.data[i]), DEC);
-            Serial.print(' ');
-        }
-        Serial.println();
+        LOG("Thermostat count", getThermostatCount());
         struct ThermostatData *thermostatData = getThermostatData();
         for (int i = 0; i < getThermostatCount(); i++) {
             struct ThermostatData thermostat = thermostatData[i];
@@ -107,7 +88,3 @@ void loop() {
         }
     }
 }
-
-
-
-
